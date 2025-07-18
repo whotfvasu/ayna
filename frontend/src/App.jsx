@@ -7,7 +7,7 @@ import {
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import FormCreate from "./pages/FormCreate";
+import FormCreate  from "./pages/FormCreate";
 import FormSubmit from "./pages/FormSubmit";
 
 export default function App() {
