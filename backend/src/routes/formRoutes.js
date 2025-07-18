@@ -4,12 +4,13 @@ import {
   getForms,
   getFormById,
 } from "../controllers/formController.js";
+import { protect } from "../middleware/protectMiddleware.js";
 
 const router = Router();
 
 // admin
-router.post("/", createForm);
-router.get("/", getForms);
+router.post("/", protect, createForm);
+router.get("/", protect, getForms);
 
 // public(janta)
 router.get("/:id", getFormById);
