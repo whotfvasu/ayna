@@ -7,6 +7,8 @@ export default function FormSubmit() {
   const [form, setForm] = useState(null);
   const [answers, setAnswers] = useState({});
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
@@ -21,6 +23,8 @@ export default function FormSubmit() {
         setAnswers(init);
       } catch (err) {
         setError(err.response?.data?.error || "Failed to load form");
+      } finally {
+        setLoading(false);
       }
     };
     loadForm();
@@ -33,8 +37,8 @@ export default function FormSubmit() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
-      // build payload
       const payload = {
         formId,
         answers: Object.entries(answers).map(([question, answer]) => ({
@@ -46,63 +50,116 @@ export default function FormSubmit() {
       setSuccess(true);
     } catch (err) {
       setError(err.response?.data?.error || "Submission failed");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  if (success)
+  if (loading) {
     return (
-      <div style={{ maxWidth: 600, margin: "auto" }}>
-        <h2>Thank you!</h2>
-        <p>Your feedback has been submitted.</p>
+      <div className="loading">
+        <p>Loading form...</p>
       </div>
     );
+  }
 
-  if (!form)
+  if (success) {
     return (
-      <div style={{ maxWidth: 600, margin: "auto" }}>
-        {error ? <p style={{ color: "red" }}>{error}</p> : <p>Loading…</p>}
+      <div className="container">
+        <div className="card text-center">
+          <h2 className="title" style={{ color: "#10b981" }}>
+            Thank you!
+          </h2>
+          <p style={{ color: "#6b7280", fontSize: "1.125rem" }}>
+            Your feedback has been submitted successfully.
+          </p>
+        </div>
       </div>
     );
+  }
+
+  if (!form) {
+    return (
+      <div className="container">
+        <div className="card">
+          <p className="text-error">{error || "Form not found"}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ maxWidth: 600, margin: "auto" }}>
-      <h2>{form.title}</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
-        {form.questions.map((q, idx) => (
-          <div key={idx} style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", marginBottom: 4 }}>
-              {q.questionText}
-            </label>
-            {q.questionType === "text" ? (
-              <input
-                type="text"
-                value={answers[q.questionText]}
-                onChange={(e) => handleChange(q.questionText, e.target.value)}
-                required
-                style={{ width: "100%" }}
-              />
-            ) : (
-              q.options.map((opt, oi) => (
-                <div key={oi}>
-                  <label>
-                    <input
-                      type="radio"
-                      name={q.questionText}
-                      value={opt}
-                      checked={answers[q.questionText] === opt}
-                      onChange={() => handleChange(q.questionText, opt)}
-                      required
-                    />
-                    {" " + opt}
-                  </label>
+    <div className="container">
+      <div className="card">
+        <h2 className="title">{form.title}</h2>
+        <p style={{ color: "#6b7280", marginBottom: "2rem" }}>
+          Please fill out all questions below
+        </p>
+
+        {error && <p className="text-error mb-4">{error}</p>}
+
+        <form onSubmit={handleSubmit}>
+          {form.questions.map((q, idx) => (
+            <div key={idx} className="form-group">
+              <label className="form-label">
+                {q.questionText}
+                {q.questionType === "text" && (
+                  <span style={{ color: "#ef4444" }}>*</span>
+                )}
+              </label>
+
+              {q.questionType === "text" ? (
+                <input
+                  className="form-input"
+                  type="text"
+                  value={answers[q.questionText] || ""}
+                  onChange={(e) => handleChange(q.questionText, e.target.value)}
+                  required
+                  placeholder="Enter your answer"
+                />
+              ) : (
+                <div style={{ marginTop: "0.5rem" }}>
+                  {q.options.map((opt, oi) => (
+                    <label
+                      key={oi}
+                      style={{
+                        display: "block",
+                        marginBottom: "0.75rem",
+                        cursor: "pointer",
+                        padding: "0.5rem",
+                        border: "1px solid #e5e7eb",
+                        borderRadius: "6px",
+                        backgroundColor:
+                          answers[q.questionText] === opt ? "#f3f4f6" : "white",
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name={q.questionText}
+                        value={opt}
+                        checked={answers[q.questionText] === opt}
+                        onChange={() => handleChange(q.questionText, opt)}
+                        required
+                        style={{ marginRight: "0.75rem" }}
+                      />
+                      {opt}
+                    </label>
+                  ))}
                 </div>
-              ))
-            )}
-          </div>
-        ))}
-        <button type="submit">Submit Feedback</button>
-      </form>
+              )}
+            </div>
+          ))}
+
+          <button
+            type="submit"
+            className="btn btn-primary"
+            style={{ width: "100%", marginTop: "1rem" }}
+            disabled={submitting}
+          >
+            {submitting ? "Submitting..." : "Submit Feedback"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

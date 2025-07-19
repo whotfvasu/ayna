@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import api from "../services/api";
 
 export default function FormCreate() {
@@ -8,6 +8,7 @@ export default function FormCreate() {
     { questionText: "", questionType: "text", options: [""] },
   ]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleTitleChange = (e) => setTitle(e.target.value);
@@ -52,111 +53,145 @@ export default function FormCreate() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title || questions.some((q) => !q.questionText)) {
-      setError("Title and all questions are required");
+      setError("Form title and all questions are required");
       return;
     }
+    setLoading(true);
     try {
       await api.post("/forms", { title, questions });
       navigate("/dashboard");
     } catch (err) {
       setError(err.response?.data?.error || "Failed to create form");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: "auto" }}>
-      <h2>Create New Form</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Form Title</label>
-          <input
-            value={title}
-            onChange={handleTitleChange}
-            required
-            style={{ width: "100%", marginBottom: 16 }}
-          />
+    <div className="container">
+      <div className="card">
+        <div className="flex-between mb-6">
+          <h2 className="title">Create New Form</h2>
+          <Link to="/dashboard" className="btn btn-secondary btn-small">
+            ← Back to Dashboard
+          </Link>
         </div>
 
-        {questions.map((q, qi) => (
-          <fieldset key={qi} style={{ marginBottom: 24 }}>
-            <legend>
-              Question {qi + 1}{" "}
-              {questions.length > 1 && (
-                <button type="button" onClick={() => removeQuestion(qi)}>
-                  Remove
-                </button>
-              )}
-            </legend>
+        {error && <p className="text-error mb-4">{error}</p>}
 
-            <div>
-              <label>Text</label>
-              <input
-                value={q.questionText}
-                onChange={(e) =>
-                  handleQuestionChange(qi, "questionText", e.target.value)
-                }
-                required
-                style={{ width: "100%", marginBottom: 8 }}
-              />
-            </div>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label className="form-label">Form Title</label>
+            <input
+              className="form-input"
+              value={title}
+              onChange={handleTitleChange}
+              required
+              placeholder="e.g. Customer Satisfaction Survey"
+            />
+          </div>
 
-            <div>
-              <label>Type</label>
-              <select
-                value={q.questionType}
-                onChange={(e) =>
-                  handleQuestionChange(qi, "questionType", e.target.value)
-                }
-              >
-                <option value="text">Text</option>
-                <option value="multiple-choice">Multiple Choice</option>
-              </select>
-            </div>
-
-            {q.questionType === "multiple-choice" && (
-              <div style={{ marginTop: 8 }}>
-                <label>Options</label>
-                {q.options.map((opt, oi) => (
-                  <div key={oi} style={{ display: "flex", marginBottom: 4 }}>
-                    <input
-                      value={opt}
-                      onChange={(e) =>
-                        handleOptionChange(qi, oi, e.target.value)
-                      }
-                      required
-                      style={{ flex: 1 }}
-                    />
-                    {q.options.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeOption(qi, oi)}
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                ))}
-                {q.options.length < 5 && (
-                  <button type="button" onClick={() => addOption(qi)}>
-                    + Add Option
+          {questions.map((q, qi) => (
+            <div key={qi} className="fieldset">
+              <div className="flex-between mb-4">
+                <span className="legend">Question {qi + 1}</span>
+                {questions.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeQuestion(qi)}
+                    className="btn btn-danger btn-small"
+                  >
+                    Remove
                   </button>
                 )}
               </div>
+
+              <div className="form-group">
+                <label className="form-label">Question Text</label>
+                <input
+                  className="form-input"
+                  value={q.questionText}
+                  onChange={(e) =>
+                    handleQuestionChange(qi, "questionText", e.target.value)
+                  }
+                  required
+                  placeholder="Enter your question"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Question Type</label>
+                <select
+                  className="form-select"
+                  value={q.questionType}
+                  onChange={(e) =>
+                    handleQuestionChange(qi, "questionType", e.target.value)
+                  }
+                >
+                  <option value="text">Text Input</option>
+                  <option value="multiple-choice">Multiple Choice</option>
+                </select>
+              </div>
+
+              {q.questionType === "multiple-choice" && (
+                <div className="form-group">
+                  <label className="form-label">Answer Options</label>
+                  {q.options.map((opt, oi) => (
+                    <div key={oi} className="flex flex-gap mb-4">
+                      <input
+                        className="form-input"
+                        value={opt}
+                        onChange={(e) =>
+                          handleOptionChange(qi, oi, e.target.value)
+                        }
+                        required
+                        placeholder={`Option ${oi + 1}`}
+                      />
+                      {q.options.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeOption(qi, oi)}
+                          className="btn btn-secondary btn-small"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {q.options.length < 5 && (
+                    <button
+                      type="button"
+                      onClick={() => addOption(qi)}
+                      className="btn btn-secondary btn-small"
+                    >
+                      + Add Option
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+
+          <div className="flex-between">
+            {questions.length < 5 && (
+              <button
+                type="button"
+                onClick={addQuestion}
+                className="btn btn-secondary"
+              >
+                + Add Question
+              </button>
             )}
-          </fieldset>
-        ))}
-
-        {questions.length < 5 && (
-          <button type="button" onClick={addQuestion}>
-            + Add Question
-          </button>
-        )}
-
-        <div style={{ marginTop: 16 }}>
-          <button type="submit">Save Form</button>
-        </div>
-      </form>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={loading}
+            >
+              {loading ? "Creating Form..." : "Create Form"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
