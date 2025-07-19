@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../services/api";
 
-
 export default function Register() {
   const [formData, setFormData] = useState({
     name: "",
@@ -23,7 +22,8 @@ export default function Register() {
     setLoading(true);
     try {
       await api.post("/auth/register", formData);
-      navigate("/dashboard");
+      // Force page reload to refresh authentication state
+      window.location.reload();
     } catch (err) {
       setError(err.response?.data?.error || "Registration failed");
     } finally {

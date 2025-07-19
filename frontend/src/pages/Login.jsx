@@ -18,7 +18,7 @@ export default function Login() {
     setLoading(true);
     try {
       await api.post("/auth/login", formData);
-      navigate("/dashboard");
+      window.location.reload();
     } catch (err) {
       setError(err.response?.data?.error || "Login failed");
     } finally {
